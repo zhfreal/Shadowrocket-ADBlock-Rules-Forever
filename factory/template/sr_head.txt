@@ -1,5 +1,5 @@
-# Best Shadowrocket Rules (https://github.com/Johnshall/Shadowrocket-ADBlock-Rules-Forever)
-# by Moshel and Johnshall
+# Best Shadowrocket Rules (https://github.com/zhfreal/Shadowrocket-ADBlock-Rules-Forever)
+# by Moshel, Johnshall and zhfreal
 # build time: UTC {{build_time}}
 
 [General]
