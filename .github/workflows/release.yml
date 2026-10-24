@@ -1,0 +1,74 @@
+name: Release Shadowrocket Rules
+
+on:
+  schedule:
+    # 每日8时开始
+    - cron:  '0 23 * * *'
+  
+  push:
+    branches:
+      - build-patched
+    paths-ignore: 
+      - '**.md'
+      - 'LICENSE'
+      
+  pull_request_target:
+    branches:
+      - build-patched
+    paths-ignore: 
+      - '**.md'
+      - 'LICENSE'
+
+  workflow_dispatch:
+  
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: build-patched
+          path: build
+
+      - uses: actions/checkout@v4
+        with:
+          ref: release-patched
+          path: release
+
+      - name: Install requirements
+        run: pip3 install -r build/requirements.txt
+
+      - name: Build Rules
+        run: |
+          cd build || exit 1
+          ./factory/auto_build.sh
+      
+      - name: Move files
+        run: |
+          cd build || exit 1
+          cp *.conf ../release/
+          cp -r figure ../release/
+          cp LICENSE ../release/
+          cp readme.md ../release/
+      
+      - name: Update lazy rules
+        run: |
+          cd release || exit 1
+          rm lazy.conf lazy_group.conf
+          curl -O https://raw.githubusercontent.com/LOWERTOP/Shadowrocket/main/lazy.conf
+          curl -O https://raw.githubusercontent.com/LOWERTOP/Shadowrocket/main/lazy_group.conf
+          sed -i 's/^hostname = \*\.google\.cn/hostname = \*\.google\.cn,gs-loc\.apple\.com,gs-loc-cn\.apple\.com,gsp-ssl\.ls\.apple\.com,bluedot\.is\.autonavi\.com,bluedot\.is\.autonavi\.com\.gds\.alibabadns\.com/' lazy.conf lazy_group.conf
+        
+      - name: Remove commits
+        run: |
+          cd release || exit 1
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git checkout --orphan latest_branch
+          git add -A
+          git commit -am "Nightly build"
+          git branch -D release-patched
+          git branch -m release-patched
+          git push -f origin release-patched
